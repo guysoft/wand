@@ -13,12 +13,12 @@ from .api import library, libmagick
 
 __all__ = 'Parser'
 
-library.MagickCommandGenesis.argtypes = [ctypes.c_void_p,
-                                         ctypes.c_void_p,
-                                         ctypes.c_int,
-                                         ctypes.POINTER(ctypes.c_char_p),
-                                         ctypes.POINTER(ctypes.c_char_p),
-                                         ctypes.c_void_p]
+library.MagickCommandGenesis.argtypes = [ctypes.c_void_p,                  # ImageInfo *
+                                         ctypes.c_void_p,                  # (* MagickCommand)
+                                         ctypes.c_int,                     # int
+                                         ctypes.POINTER(ctypes.c_char_p),  # char **
+                                         ctypes.POINTER(ctypes.c_char_p),  # char **
+                                         ctypes.c_void_p]                  # ExceptionInfo *
 library.MagickCommandGenesis.restype = ctypes.c_int
 libmagick.AcquireImageInfo.argtypes = []
 libmagick.AcquireImageInfo.restype = ctypes.c_void_p
@@ -28,6 +28,24 @@ libmagick.CatchException.argtypes = [ctypes.c_void_p]
 
 
 class Parser(object):
+    """Parser object. Digest complete CLI commands, and binds
+    formatted arguments when calling. Example usage::
+
+        from wand.cli import Parser
+        # Bind CLI command
+        with Parser('convert {source} -resize 64x64 {output}' as cli:
+            cli(source='dragon.gif', output='resize_dragon.gif')
+        # Call direct ImageMagick command
+        Parser().run([' montage', 'balloon.gif', 'medical.gif', 'present.gif', 'shading.gif', 'montage.jpg'])
+
+    :Notice:
+    : - This class is experimental. Methods, behaviour, and structure are due to change.
+    : - ImageMagick utility commands will write to stdout & stderr. Mixing with other
+        Python streams, pip, & IO libraries will result in undefined behaviour.
+
+    :param command: CLI string to execute.
+    :type command: :class:`basestring`
+    """
     utilities = {'animate': library.AnimateImageCommand,
                  'compare': library.CompareImageCommand,
                  'composite': library.CompositeImageCommand,
@@ -49,6 +67,14 @@ class Parser(object):
         return self.run(command.split())
 
     def set_command(self, command):
+        """
+        Defines CLI instructions to bind when class is called.
+
+        :param command: CLI command to execute
+        :type command: :class:`basestring`
+        :returns Parser: instance of Parser for method changing.
+        :rtype Parser:
+        """
         if not isinstance(command, basestring):
             raise TypeError('Expecting basestring, not %s' % repr(command))
         self.command = command.strip()
@@ -57,12 +83,22 @@ class Parser(object):
     def find_utility(self, utility):
         """
         Maps command utility term to library function-pointer
+
+        :param utility: Utility name to map API function pointer
+        :type utility: :class:`basestring`
+        :returns: ImageMagick function reference.
         """
         if utility not in self.utilities:
             raise ValueError('Expecting ImageMagick utility, not %s' % repr(utility))
         return self.utilities[utility]
 
     def run(self, arguments):
+        """
+        Allocates & executes ImageMagick command with given arguments.
+        :param arguments: List of words to be converted to C's 'char ** argv'
+        :type arguments: :class:`collections.Sequence`
+        :return: `bool` True on success
+        """
         if not isinstance(arguments, collections.Sequence):
             raise TypeError('Expecting sequence of ImageMagick instructions, not %s' % repr(arguments))
         # Allocate ImageInfo
@@ -73,8 +109,8 @@ class Parser(object):
         argument_count = len(arguments)
         # Convert arguments to C types
         c_arguments = (ctypes.c_char_p * argument_count)(*arguments)
-        # Meta pointer-pointer (? no idea ?)
-        meta = (ctypes.c_char_p * 1)()
+        # Metadata reference to char pointer. Default this to NULL (void *)
+        meta = None
         # Allocate Exception handler
         exception = libmagick.AcquireExceptionInfo()
         # Genesis Magick Suite

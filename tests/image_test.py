@@ -1401,3 +1401,16 @@ def test_issue_150(fx_asset, tmpdir):
         img.format = 'pjpeg'
         with open(str(tmpdir.join('out.jpg')), 'wb') as f:
             img.save(file=f)
+
+
+def test_issue_232(fx_asset):
+    """Reading WMF images should respect source background, and not attempt
+    to set it to Color("transparent")
+
+    https://github.com/dahlia/wand/issues/232
+
+    """
+    # TODO: Check if system can read WMF files
+    with Image(filename=str(fx_asset.join('wizard.wmf'))) as wmf_image:
+        with wmf_image.convert('JPG') as converted_image:
+            assert converted_image[0, 0] == Color('white')

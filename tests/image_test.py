@@ -1414,4 +1414,4 @@ def test_issue_232(fx_asset):
     with Image(filename=str(fx_asset.join('wizard.wmf')),
                background=False) as wmf_image:
         with wmf_image.convert('JPG') as converted_image:
-            assert converted_image[0, 0] == Color('#FFFFFF00')
+            assert converted_image[0, 0].red == Color('white').red

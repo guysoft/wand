@@ -1995,7 +1995,7 @@ class Image(BaseImage):
     def __init__(self, image=None, blob=None, file=None, filename=None,
                  format=None, width=None, height=None, background=None,
                  resolution=None):
-        new_args = width, height, background
+        new_args = width, height
         open_args = image, blob, file, filename
         if (any(a is not None for a in new_args) and
                 any(a is not None for a in open_args)):
@@ -2026,11 +2026,14 @@ class Image(BaseImage):
             else:
                 if format:
                     format = binary(format)
-                with Color('transparent') as bg:  # FIXME: parameterize this
-                    result = library.MagickSetBackgroundColor(self.wand,
-                                                              bg.resource)
-                    if not result:
-                        self.raise_exception()
+                if background is None:
+                    background = Color('transparent')
+                if background is not False:
+                    with background as bg:
+                        result = library.MagickSetBackgroundColor(self.wand,
+                                                                  bg.resource)
+                        if not result:
+                            self.raise_exception()
                 if file is not None:
                     if format:
                         library.MagickSetFilename(self.wand,

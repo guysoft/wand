@@ -1411,6 +1411,7 @@ def test_issue_232(fx_asset):
 
     """
     # TODO: Check if system can read WMF files
-    with Image(filename=str(fx_asset.join('wizard.wmf'))) as wmf_image:
+    with Image(filename=str(fx_asset.join('wizard.wmf')),
+               background=False) as wmf_image:
         with wmf_image.convert('JPG') as converted_image:
-            assert converted_image[0, 0] == Color('white')
+            assert converted_image[0, 0] == Color('#FFFFFF00')

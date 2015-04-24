@@ -101,3 +101,15 @@ class Font(tuple):
             type(self),
             tuple.__repr__(self)
         )
+
+    def _repr_png_(self):
+        pangram = 'The quick brown fox jumps over the lazy dog.'
+        png = None
+        from .image import Image
+        from os import getenv
+        pangram = getenv('pangram', pangram)
+        with Image() as img:
+            img.font = self
+            img.read(filename=b'label:' + text(pangram).encode('utf-8'))
+            png = img.make_blob(format='PNG')
+        return png

@@ -15,7 +15,7 @@ from wand.color import Color
 from wand.compat import PY3, string_type, text, text_type
 from wand.exceptions import MissingDelegateError
 from wand.font import Font
-
+from wand.version import formats
 
 try:
     filesystem_encoding = sys.getfilesystemencoding()
@@ -1403,6 +1403,8 @@ def test_issue_150(fx_asset, tmpdir):
             img.save(file=f)
 
 
+@mark.skipif('WMF' not in formats('WMF'),
+             reason='System library not able to read WMF format.')
 def test_issue_232(fx_asset):
     """Reading WMF images should respect source background, and not attempt
     to set it to Color("transparent")
@@ -1410,7 +1412,6 @@ def test_issue_232(fx_asset):
     https://github.com/dahlia/wand/issues/232
 
     """
-    # TODO: Check if system can read WMF files
     with Image(filename=str(fx_asset.join('wizard.wmf')),
                background=False) as wmf_image:
         with wmf_image.convert('JPG') as converted_image:

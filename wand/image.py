@@ -1929,6 +1929,50 @@ class BaseImage(Resource):
             self.composite(watermark_image, left=left, top=top)
         self.raise_exception()
 
+    @manipulative
+    def white_balance(self, x=None, y=None, balance_color=None):
+        """Recalculate color matrix of an image by promoting a color
+        at a given coordinate to white value.
+
+        .. seealso:: This method inspired by Fred's ImageMagick Scripts.
+                     http://fmwconcepts.com/imagemagick/whitebalance/index.php
+
+        :param x: horizontal offset of pixel to balance with.
+        :type x: :class:`numbers.Integral`
+        :param y: vertical offset of pixel to balance with.
+        :type y: :class:`numbers.Integral`
+        :param balance_color: Color to align to, default white.
+        :type balance_color: :class:`wand.color.Color`
+
+        .. versionadded:: 0.4.1
+        """
+        if not balance_color:
+            balance_color = Color('white');
+        if not isinstance(balance_color, Color):
+            raise TypeError('balance_color should be instance of wand.color.Color,'
+                            'not, ' + repr(balance_color))
+        if not isinstance(x, numbers.Integral) or not isinstance(y, numbers.Integral):
+            raise TypeError('x & y must be integers')
+        user_color = self[x, y]
+        kernel_info = []
+        for c in ('red', 'green', 'blue'):
+            u = getattr(user_color, c, 0.0)
+            r = getattr(balance_color, c, 0.0)
+            if u == 0.0:
+                kernel_info.append('255')
+            else:
+                kernel_info.append(str(round(r/u, 5)))
+
+        kernel = libmagick.AcquireKernelInfo(' 0 0 0 '.join(kernel_info));
+        if not kernel:
+            self.raise_exception()
+            return
+        library.MagickColorMatrixImage(self.wand, kernel);
+        kernel = libmagick.DestroyKernelInfo(kernel)
+        self.raise_exception()
+
+
+
     def __repr__(self):
         cls = type(self)
         if getattr(self, 'c_resource', None) is None:

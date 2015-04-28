@@ -478,6 +478,9 @@ try:
                                                    ctypes.c_int,
                                                    ctypes.c_double]
 
+    library.MagickColorMatrixImage.argtypes = [ctypes.c_void_p,
+                                               ctypes.c_void_p]
+
     library.MagickCompositeImage.argtypes = [ctypes.c_void_p, ctypes.c_void_p,
                                              ctypes.c_int, ctypes.c_ssize_t,
                                              ctypes.c_ssize_t]
@@ -548,6 +551,12 @@ try:
 
     libmagick.DestroyExceptionInfo.argtypes = [ctypes.c_void_p]
     libmagick.DestroyExceptionInfo.restype = ctypes.c_void_p
+
+    libmagick.AcquireKernelInfo.argtypes = [ctypes.c_char_p]
+    libmagick.AcquireKernelInfo.restype = ctypes.c_void_p
+
+    libmagick.DestroyKernelInfo.argtypes = [ctypes.c_void_p]
+    libmagick.DestroyKernelInfo.restype = ctypes.c_void_p
 
     library.MagickGetSize.argtypes = [ctypes.c_void_p,
                                       ctypes.POINTER(ctypes.c_uint),

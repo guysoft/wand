@@ -253,6 +253,14 @@ try:
     library.MagickSetImageBackgroundColor.argtypes = [ctypes.c_void_p,
                                                       ctypes.c_void_p]
 
+    library.MagickSetImageMatte.argtypes = [ctypes.c_void_p, ctypes.c_int]
+
+    library.MagickGetImageMatteColor.argtypes = [ctypes.c_void_p,
+                                                 ctypes.c_void_p]
+
+    library.MagickSetImageMatteColor.argtypes = [ctypes.c_void_p,
+                                                 ctypes.c_void_p]
+
     library.MagickGetImageAlphaChannel.argtypes = [ctypes.c_void_p]
     library.MagickGetImageAlphaChannel.restype = ctypes.c_size_t
 
@@ -305,6 +313,10 @@ try:
 
     library.MagickSetImageUnits.argtypes = [ctypes.c_void_p, ctypes.c_int]
 
+    library.MagickGetImageVirtualPixelMethod.argtypes = [ctypes.c_void_p]
+
+    library.MagickSetImageVirtualPixelMethod.argtypes = [ctypes.c_void_p, ctypes.c_int]
+
     library.MagickGetImageColorspace.argtypes = [ctypes.c_void_p]
     library.MagickGetImageColorspace.restype = ctypes.c_int
 
@@ -335,6 +347,34 @@ try:
     library.MagickFlipImage.argtypes = [ctypes.c_void_p]
 
     library.MagickFlopImage.argtypes = [ctypes.c_void_p]
+
+    library.MagickFrameImage.argtypes = [ctypes.c_void_p,   # wand
+                                         ctypes.c_void_p,   # matte_color
+                                         ctypes.c_size_t,   # width
+                                         ctypes.c_size_t,   # height
+                                         ctypes.c_ssize_t,  # inner_bevel
+                                         ctypes.c_ssize_t]  # outer_bevel
+
+    library.MagickFunctionImage.argtypes = [ctypes.c_void_p,  # wand
+                                            ctypes.c_int,     # MagickFunction
+                                            ctypes.c_size_t,  # number_arguments
+                                            ctypes.POINTER(ctypes.c_double)]  # arguments
+
+    library.MagickFunctionImageChannel.argtypes = [ctypes.c_void_p,  # wand
+                                                   ctypes.c_int,     # channel
+                                                   ctypes.c_int,     # MagickFunction
+                                                   ctypes.c_size_t,  # number_arguments
+                                                   ctypes.POINTER(ctypes.c_double)]  # arguments
+
+    library.MagickFxImage.argtypes = [ctypes.c_void_p,  # wand
+                                      ctypes.c_char_p]  # expression
+    library.MagickFxImage.restype = ctypes.c_void_p
+
+    library.MagickFxImageChannel.argtypes = [ctypes.c_void_p,  # wand
+                                             ctypes.c_int,     # channel
+                                             ctypes.c_char_p]  # expression
+    library.MagickFxImageChannel.restype = ctypes.c_void_p
+
 
     library.MagickResetImagePage.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
 
@@ -911,6 +951,14 @@ try:
                                             ctypes.c_char_p]
     library.MagickAnnotateImage.restype = ctypes.c_int
 
+    library.MagickDistortImage.argtypes = [ctypes.c_void_p,  # wand
+                                           ctypes.c_int,     # method
+                                           ctypes.c_size_t,  # number_arguments
+                                           ctypes.POINTER(ctypes.c_double),  # arguments
+                                           ctypes.c_int]     # bestfit
+    library.MagickDistortImage.restype = ctypes.c_int
+
+
     library.ClearDrawingWand.argtypes = [ctypes.c_void_p]
 
     library.MagickDrawImage.argtypes = [ctypes.c_void_p,
@@ -1177,11 +1225,13 @@ try:
                                             ctypes.c_double,
                                             ctypes.c_double]
 
-    library.MagickTransposeImage.argtypes = [ctypes.c_void_p]
-    library.MagickTransverseImage.argtypes = [ctypes.c_void_p]
     library.MagickAppendImages.argtypes = [ctypes.c_void_p,
                                            ctypes.c_int]
     library.MagickAppendImages.restype = ctypes.c_void_p
+
+    library.MagickTransposeImage.argtypes = [ctypes.c_void_p]
+    library.MagickTransverseImage.argtypes = [ctypes.c_void_p]
+
 
 except AttributeError:
     raise ImportError('MagickWand shared library not found or incompatible\n'

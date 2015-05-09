@@ -398,9 +398,12 @@ try:
     # library.MagickSetSizeOffset
     # library.MagickSetType
 
-    #
-    # Magick Wand Image Methods
-    # http://www.imagemagick.org/api/magick-image.php
+    ############################################################################
+    #                                                                          #
+    # Magick Wand Image Methods                                                #
+    # http://www.imagemagick.org/api/magick-image.php                          #
+    #                                                                          #
+    ############################################################################
     library.GetImageFromMagickWand.argtypes = [ctypes.c_void_p]
     library.GetImageFromMagickWand.restype = ctypes.c_void_p
     # library.MagickAdaptiveBlurImage
@@ -813,7 +816,7 @@ try:
     # http://www.imagemagick.org/api/pixel-iterator.php                        #
     #                                                                          #
     ############################################################################
-    # library.ClearPixelIterator
+    library.ClearPixelIterator.argtypes = [ctypes.c_void_p]
     library.ClonePixelIterator.argtypes = [ctypes.c_void_p]
     library.ClonePixelIterator.restype = ctypes.c_void_p
     library.DestroyPixelIterator.argtypes = [ctypes.c_void_p]
@@ -822,24 +825,35 @@ try:
     library.NewPixelIterator.argtypes = [ctypes.c_void_p]
     library.NewPixelIterator.restype = ctypes.c_void_p
     library.PixelClearIteratorException.argtypes = [ctypes.c_void_p]
-    # library.NewPixelRegionIterator
-    # library.PixelGetCurrentIteratorRow
+    library.NewPixelRegionIterator.argtypes = [ctypes.c_void_p,
+                                               ctypes.c_size_t, ctypes.c_size_t,
+                                               ctypes.c_size_t, ctypes.c_size_t]
+    library.NewPixelRegionIterator.restype = ctypes.c_void_p
+    library.PixelGetCurrentIteratorRow.argtypes = [
+        ctypes.c_void_p,
+        ctypes.POINTER(ctypes.c_size_t)
+    ]
     library.PixelGetIteratorException.argtypes = [ctypes.c_void_p,
                                                   ctypes.POINTER(ctypes.c_int)]
     library.PixelGetIteratorException.restype = c_magick_char_p
     # library.PixelGetIteratorExceptionType
-    # library.PixelGetIteratorRow
+    library.PixelGetIteratorRow.argtypes = [ctypes.c_void_p]
+    library.PixelGetIteratorRow.restype = ctypes.c_ssize_t
     library.PixelGetNextIteratorRow.argtypes = [
         ctypes.c_void_p,
         ctypes.POINTER(ctypes.c_size_t)
     ]
     library.PixelGetNextIteratorRow.restype = ctypes.POINTER(ctypes.c_void_p)
-    # library.PixelGetPreviousIteratorRow
-    # library.PixelResetIterator
+    library.PixelGetPreviousIteratorRow.argtypes = [
+        ctypes.c_void_p,
+        ctypes.POINTER(ctypes.c_size_t)
+    ]
+    library.PixelGetPreviousIteratorRow.restype = ctypes.POINTER(ctypes.c_void_p)
+    library.PixelResetIterator.argtypes = [ctypes.c_void_p]
     library.PixelSetFirstIteratorRow.argtypes = [ctypes.c_void_p]
     library.PixelSetIteratorRow.argtypes = [ctypes.c_void_p, ctypes.c_ssize_t]
-    # library.PixelSetLastIteratorRow
-    # library.PixelSyncIterator
+    library.PixelSetLastIteratorRow.argtypes = [ctypes.c_void_p]
+    library.PixelSyncIterator.argtypes = [ctypes.c_void_p]
 
     ############################################################################
     #                                                                          #
@@ -847,25 +861,34 @@ try:
     # http://www.imagemagick.org/api/pixel-wand.php                            #
     #                                                                          #
     ############################################################################
-    # library.ClearPixelWand
-    # library.ClonePixelWand
-    # library.ClonePixelWands
+    library.ClearPixelWand.argtypes = [ctypes.c_void_p]
+    library.ClonePixelWand.argtypes = [ctypes.c_void_p]
+    library.ClonePixelWand.restype = ctypes.c_void_p
+    library.ClonePixelWands.argtypes = [ctypes.POINTER(ctypes.c_void_p),
+                                        ctypes.c_size_t]
+    library.ClonePixelWands.restype = ctypes.POINTER(ctypes.c_void_p)
     library.DestroyPixelWand.argtypes = [ctypes.c_void_p]
     library.DestroyPixelWand.restype = ctypes.c_void_p
-    # library.DestroyPixelWands
+    library.DestroyPixelWands.argtypes = [ctypes.POINTER(ctypes.c_void_p),
+                                          ctypes.c_size_t]
+    library.DestroyPixelWands.restype = ctypes.POINTER(ctypes.c_void_p)
     library.IsPixelWandSimilar.argtypes = [ctypes.c_void_p, ctypes.c_void_p,
                                            ctypes.c_double]
     library.IsPixelWand.argtypes = [ctypes.c_void_p]
     library.NewPixelWand.argtypes = []
     library.NewPixelWand.restype = ctypes.c_void_p
-    # library.NewPixelWands
+    library.NewPixelWands.argtypes = [ctypes.POINTER(ctypes.c_void_p),
+                                      ctypes.c_size_t]
+    library.NewPixelWands.restype = ctypes.POINTER(ctypes.c_void_p)
     library.PixelClearException.argtypes = [ctypes.c_void_p]
     library.PixelGetAlpha.argtypes = [ctypes.c_void_p]
     library.PixelGetAlpha.restype = ctypes.c_double
     library.PixelGetAlphaQuantum.argtypes = [ctypes.c_void_p]
     library.PixelGetAlphaQuantum.restype = ctypes.c_size_t
-    # library.PixelGetBlack
-    # library.PixelGetBlackQuantum
+    library.PixelGetBlack.argtypes = [ctypes.c_void_p]
+    library.PixelGetBlack.restype = ctypes.c_double
+    library.PixelGetBlackQuantum.argtypes = [ctypes.c_void_p]
+    library.PixelGetBlackQuantum.restype = ctypes.c_size_t
     library.PixelGetBlue.argtypes = [ctypes.c_void_p]
     library.PixelGetBlue.restype = ctypes.c_double
     library.PixelGetBlueQuantum.argtypes = [ctypes.c_void_p]
@@ -876,22 +899,30 @@ try:
     library.PixelGetColorAsNormalizedString.restype = c_magick_char_p
     library.PixelGetColorCount.argtypes = [ctypes.c_void_p]
     library.PixelGetColorCount.restype = ctypes.c_size_t
-    # library.PixelGetCyan
-    # library.PixelGetCyanQuantum
+    library.PixelGetCyan.argtypes = [ctypes.c_void_p]
+    library.PixelGetCyan.restype = ctypes.c_double
+    library.PixelGetCyanQuantum.argtypes = [ctypes.c_void_p]
+    library.PixelGetCyanQuantum.restype = ctypes.c_size_t
     library.PixelGetException.argtypes = [ctypes.c_void_p,
                                           ctypes.POINTER(ctypes.c_int)]
     library.PixelGetException.restype = c_magick_char_p
-    # library.PixelGetExceptionType
-    # library.PixelGetFuzz
+    library.PixelGetExceptionType.argtypes = [ctypes.c_void_p]
+    library.PixelGetExceptionType.restype = ctypes.c_int
+    library.PixelGetFuzz.argtypes = [ctypes.c_void_p]
+    library.PixelGetFuzz.restype = ctypes.c_double
     library.PixelGetGreen.argtypes = [ctypes.c_void_p]
     library.PixelGetGreen.restype = ctypes.c_double
     library.PixelGetGreenQuantum.argtypes = [ctypes.c_void_p]
     library.PixelGetGreenQuantum.restype = ctypes.c_size_t
-    # library.PixelGetHSL
-    # library.PixelGetIndex
-    # library.PixelGetMagenta
-    # library.PixelGetMagentaQuantum
-    library.PixelGetMagickColor.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+    library.PixelGetHSL.argtypes = [ctypes.c_void_p, ctypes.c_double_p,
+                                    ctypes.c_double_p, ctypes.c_double_p]
+    library.PixelGetIndex.argtypes = [ctypes.c_void_p]
+    library.PixelGetIndex.restype = ctypes.c_size_t
+    library.PixelGetMagenta.argtypes = [ctypes.c_void_p]
+    library.PixelGetMagenta.restype = ctypes.c_double
+    library.PixelGetMagentaQuantum.argtypes = [ctypes.c_void_p]
+    library.PixelGetMagentaQuantum.restype = ctypes.c_size_t
+    # library.PixelGetMagickColor.argtypes
     # library.PixelGetPixel
     # library.PixelGetQuantumPacket
     # library.PixelGetQuantumPixel
@@ -899,33 +930,36 @@ try:
     library.PixelGetRed.restype = ctypes.c_double
     library.PixelGetRedQuantum.argtypes = [ctypes.c_void_p]
     library.PixelGetRedQuantum.restype = ctypes.c_size_t
-    # library.PixelGetYellow
-    # library.PixelGetYellowQuantum
-    # library.PixelSetAlpha
-    # library.PixelSetAlphaQuantum
-    # library.PixelSetBlack
-    # library.PixelSetBlackQuantum
-    # library.PixelSetBlue
-    # library.PixelSetBlueQuantum
+    library.PixelGetYellow.argtypes = [ctypes.c_void_p]
+    library.PixelGetYellow.restype = ctypes.c_double
+    library.PixelGetYellowQuantum.argtypes = [ctypes.c_void_p]
+    library.PixelGetYellowQuantum.restype = ctypes.c_size_t
+    library.PixelSetAlpha.argtypes = [ctypes.c_void_p, ctypes.c_double]
+    library.PixelSetAlphaQuantum.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+    library.PixelSetBlack.argtypes = [ctypes.c_void_p, ctypes.c_double]
+    library.PixelSetBlackQuantum.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+    library.PixelSetBlue.argtypes = [ctypes.c_void_p, ctypes.c_double]
+    library.PixelSetBlueQuantum.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
     library.PixelSetColor.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
-    # library.PixelSetColorCount
-    # library.PixelSetColorFromWand
-    # library.PixelSetCyan
-    # library.PixelSetCyanQuantum
-    # library.PixelSetFuzz
-    # library.PixelSetGreen
-    # library.PixelSetGreenQuantum
-    # library.PixelSetHSL
-    # library.PixelSetIndex
-    # library.PixelSetMagenta
-    # library.PixelSetMagentaQuantum
+    library.PixelSetColorCount.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+    library.PixelSetColorFromWand.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+    library.PixelSetCyan.argtypes = [ctypes.c_void_p, ctypes.c_double]
+    library.PixelSetCyanQuantum.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+    library.PixelSetFuzz.argtypes = [ctypes.c_void_p, ctypes.c_double]
+    library.PixelSetGreen.argtypes = [ctypes.c_void_p, ctypes.c_double]
+    library.PixelSetGreenQuantum.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+    library.PixelSetHSL.argtypes = [ctypes.c_void_p, ctypes.c_double,
+                                    ctypes.c_double, ctypes.c_double]
+    library.PixelSetIndex.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+    library.PixelSetMagenta.argtypes = [ctypes.c_void_p, ctypes.c_double]
+    library.PixelSetMagentaQuantum.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
     library.PixelSetMagickColor.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
     # library.PixelSetPixelColor
     # library.PixelSetQuantumPixel
-    # library.PixelSetRed
-    # library.PixelSetRedQuantum
-    # library.PixelSetYellow
-    # library.PixelSetYellowQuantum
+    library.PixelSetRed.argtypes = [ctypes.c_void_p, ctypes.c_double]
+    library.PixelSetRedQuantum.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+    library.PixelSetYellow.argtypes = [ctypes.c_void_p, ctypes.c_double]
+    library.PixelSetYellowQuantum.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
 
     ############################################################################
     #                                                                          #

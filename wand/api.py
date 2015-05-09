@@ -31,7 +31,7 @@ class c_magick_char_p(ctypes.c_char_p):
         """Relinquishes memory allocated by ImageMagick.
         We don't need to worry about checking for ``NULL`` because
         :c:func:`MagickRelinquishMemory` does that for us.
-        Note alslo that :class:`ctypes.c_char_p` has no
+        Note also that :class:`ctypes.c_char_p` has no
         :meth:`~object.__del__` method, so we don't need to
         (and indeed can't) call the superclass destructor.
 
@@ -107,6 +107,7 @@ def load_library():
     raise IOError('cannot find library; tried paths: ' + repr(tried_paths))
 
 
+# Ensure signed size type exists within ctypes
 if not hasattr(ctypes, 'c_ssize_t'):
     if ctypes.sizeof(ctypes.c_uint) == ctypes.sizeof(ctypes.c_void_p):
         ctypes.c_ssize_t = ctypes.c_int
@@ -114,6 +115,11 @@ if not hasattr(ctypes, 'c_ssize_t'):
         ctypes.c_ssize_t = ctypes.c_long
     elif ctypes.sizeof(ctypes.c_ulonglong) == ctypes.sizeof(ctypes.c_void_p):
         ctypes.c_ssize_t = ctypes.c_longlong
+
+# Create a short-cut pointer to double as this is very common in the
+# MagickWand API
+if not hasattr(ctypes, 'c_double_p'):
+    ctypes.c_double_p = ctypes.POINTER(ctypes.c_double)
 
 
 class MagickPixelPacket(ctypes.Structure):
@@ -129,10 +135,12 @@ class MagickPixelPacket(ctypes.Structure):
                 ('opacity', ctypes.c_double),
                 ('index', ctypes.c_double)]
 
+
 class PointInfo(ctypes.Structure):
 
     _fields_ = [('x', ctypes.c_double),
                 ('y', ctypes.c_double)]
+
 
 class AffineMatrix(ctypes.Structure):
     _fields_ = [('sx', ctypes.c_double),
@@ -185,9 +193,11 @@ library = libraries[0]
 libmagick = libraries[1]
 
 try:
-    #######################
-    # Magick Core methods #
-    #######################
+    ############################################################################
+    #                                                                          #
+    # Magick Core methods                                                      #
+    #                                                                          #
+    ############################################################################
     libmagick.AcquireExceptionInfo.argtypes = []
     libmagick.AcquireExceptionInfo.restype = ctypes.c_void_p
     libmagick.CloneImages.argtypes = [ctypes.c_void_p, ctypes.c_char_p,
@@ -212,19 +222,22 @@ try:
     libmagick.MagickToMime.argtypes = [ctypes.c_char_p]
     libmagick.MagickToMime.restype = c_magick_char_p
 
-    #######################
-    # Magick Wand methods #
-    #######################
-    #
-    # Magick Wand Methods
-    # http://www.imagemagick.org/script/magick-wand.php
+    ############################################################################
+    #                                                                          #
+    # Magick Wand methods                                                      #
+    # http://www.imagemagick.org/script/magick-wand.php                        #
+    #                                                                          #
+    ############################################################################
     library.ClearMagickWand.argtypes = [ctypes.c_void_p]
     library.CloneMagickWand.argtypes = [ctypes.c_void_p]
     library.CloneMagickWand.restype = ctypes.c_void_p
     library.DestroyMagickWand.argtypes = [ctypes.c_void_p]
     library.DestroyMagickWand.restype = ctypes.c_void_p
     library.IsMagickWand.argtypes = [ctypes.c_void_p]
-    library.IsMagickWandInstantiated.argtypes = []
+    try:
+        library.IsMagickWandInstantiated.argtypes = []
+    except AttributeError:
+        library.IsMagickWandInstantiated = None
     library.MagickClearException.argtypes = [ctypes.c_void_p]
     library.MagickGetException.argtypes = [ctypes.c_void_p,
                                            ctypes.POINTER(ctypes.c_int)]
@@ -235,17 +248,18 @@ try:
     library.MagickGetIteratorIndex.restype = ctypes.c_ssize_t
     library.MagickQueryConfigureOption.argtypes = [ctypes.c_char_p]
     library.MagickQueryConfigureOption.restype = c_magick_char_p
-    library.MagickQueryConfigureOptions.argtypes = [ctypes.c_char_p,
-                                                    ctypes.POINTER(ctypes.c_size_t)]
+    library.MagickQueryConfigureOptions.argtypes = [
+        ctypes.c_char_p, ctypes.POINTER(ctypes.c_size_t)
+    ]
     library.MagickQueryConfigureOptions.restype = ctypes.POINTER(c_magick_char_p)
     library.MagickQueryFontMetrics.argtypes = [ctypes.c_void_p,
                                                ctypes.c_void_p,
                                                ctypes.c_char_p]
-    library.MagickQueryFontMetrics.restype = ctypes.POINTER(ctypes.c_double)
+    library.MagickQueryFontMetrics.restype = ctypes.c_double_p
     library.MagickQueryMultilineFontMetrics.argtypes = [ctypes.c_void_p,
                                                         ctypes.c_void_p,
                                                         ctypes.c_char_p]
-    library.MagickQueryMultilineFontMetrics.restype = ctypes.POINTER(ctypes.c_double)
+    library.MagickQueryMultilineFontMetrics.restype = ctypes.c_double_p
     library.MagickQueryFonts.argtypes = [ctypes.c_char_p,
                                          ctypes.POINTER(ctypes.c_size_t)]
     library.MagickQueryFonts.restype = ctypes.POINTER(c_magick_char_p)
@@ -266,9 +280,12 @@ try:
     library.NewMagickWandFromImage.argtypes = [ctypes.c_void_p]
     library.NewMagickWandFromImage.restype = ctypes.c_void_p
 
-    #
-    # Set or Get Magick Wand Properties
-    # http://www.imagemagick.org/api/magick-property.php
+    ############################################################################
+    #                                                                          #
+    # Set or Get Magick Wand Properties                                        #
+    # http://www.imagemagick.org/api/magick-property.php                       #
+    #                                                                          #
+    ############################################################################
     library.MagickDeleteImageArtifact.argtypes = [ctypes.c_void_p,
                                                   ctypes.c_char_p]
     library.MagickDeleteImageProperty.argtypes = [ctypes.c_void_p,
@@ -447,10 +464,10 @@ try:
                                                    ctypes.c_double,  # black
                                                    ctypes.c_double]  # white
 
-    library.MagickContrastStretchImageChannel.argtypes = [ctypes.c_void_p,  # wand
-                                                          ctypes.c_int,     # channel
-                                                          ctypes.c_double,  # black
-                                                          ctypes.c_double]  # white
+    library.MagickContrastStretchImageChannel.argtypes = [ctypes.c_void_p,
+                                                          ctypes.c_int,
+                                                          ctypes.c_double,
+                                                          ctypes.c_double]
     # library.MagickConvolveImage
     library.MagickCropImage.argtypes = [ctypes.c_void_p, ctypes.c_size_t,
                                         ctypes.c_size_t, ctypes.c_ssize_t,
@@ -464,11 +481,11 @@ try:
     # library.MagickDestroyImage
     # library.MagickDisplayImage
     # library.MagickDisplayImages
-    library.MagickDistortImage.argtypes = [ctypes.c_void_p,  # wand
-                                           ctypes.c_int,     # method
-                                           ctypes.c_size_t,  # number_arguments
-                                           ctypes.POINTER(ctypes.c_double),  # arguments
-                                           ctypes.c_int]     # bestfit
+    library.MagickDistortImage.argtypes = [ctypes.c_void_p,
+                                           ctypes.c_int,
+                                           ctypes.c_size_t,
+                                           ctypes.c_double_p,
+                                           ctypes.c_int]
     library.MagickDistortImage.restype = ctypes.c_int
     library.MagickDrawImage.argtypes = [ctypes.c_void_p,
                                         ctypes.c_void_p]
@@ -498,16 +515,15 @@ try:
                                          ctypes.c_size_t,   # height
                                          ctypes.c_ssize_t,  # inner_bevel
                                          ctypes.c_ssize_t]  # outer_bevel
-    library.MagickFunctionImage.argtypes = [ctypes.c_void_p,  # wand
-                                            ctypes.c_int,     # MagickFunction
-                                            ctypes.c_size_t,  # number_arguments
-                                            ctypes.POINTER(ctypes.c_double)]  # arguments
-
-    library.MagickFunctionImageChannel.argtypes = [ctypes.c_void_p,  # wand
-                                                   ctypes.c_int,     # channel
-                                                   ctypes.c_int,     # MagickFunction
-                                                   ctypes.c_size_t,  # number_arguments
-                                                   ctypes.POINTER(ctypes.c_double)]  # arguments
+    library.MagickFunctionImage.argtypes = [ctypes.c_void_p,
+                                            ctypes.c_int,
+                                            ctypes.c_size_t,
+                                            ctypes.c_double_p]
+    library.MagickFunctionImageChannel.argtypes = [ctypes.c_void_p,
+                                                   ctypes.c_int,
+                                                   ctypes.c_int,
+                                                   ctypes.c_size_t,
+                                                   ctypes.c_double_p]
     library.MagickFxImage.argtypes = [ctypes.c_void_p,  # wand
                                       ctypes.c_char_p]  # expression
     library.MagickFxImage.restype = ctypes.c_void_p
@@ -591,12 +607,10 @@ try:
     # library.MagickGetImagePixelColor
     # library.MagickGetImageRedPrimary
     # library.MagickGetImageRegion
+    library.MagickGetImageResolution.argtypes = [ctypes.c_void_p,
+                                                 ctypes.c_double_p,
+                                                 ctypes.c_double_p]
     # library.MagickGetImageRenderingIntent
-    library.MagickGetImageResolution.argtypes = [
-        ctypes.c_void_p,
-        ctypes.POINTER(ctypes.c_double),
-        ctypes.POINTER(ctypes.c_double)
-    ]
     # library.MagickGetImageScene
     library.MagickGetImageSignature.argtypes = [ctypes.c_void_p]
     library.MagickGetImageSignature.restype = c_magick_char_p
@@ -736,7 +750,8 @@ try:
     # library.MagickSetImageTicksPerSecond
     library.MagickSetImageType.argtypes = [ctypes.c_void_p, ctypes.c_int]
     library.MagickSetImageUnits.argtypes = [ctypes.c_void_p, ctypes.c_int]
-    library.MagickSetImageVirtualPixelMethod.argtypes = [ctypes.c_void_p, ctypes.c_int]
+    library.MagickSetImageVirtualPixelMethod.argtypes = [ctypes.c_void_p,
+                                                         ctypes.c_int]
     # library.MagickSetImageWhitePoint
     # library.MagickShadeImage
     # library.MagickShadowImage
@@ -792,9 +807,12 @@ try:
                                           ctypes.c_int]
     library.MagickWriteImagesFile.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
 
-    #
-    # Pixel Iterator Methods
-    # http://www.imagemagick.org/api/pixel-iterator.php
+    ############################################################################
+    #                                                                          #
+    # Pixel Iterator Methods                                                   #
+    # http://www.imagemagick.org/api/pixel-iterator.php                        #
+    #                                                                          #
+    ############################################################################
     # library.ClearPixelIterator
     library.ClonePixelIterator.argtypes = [ctypes.c_void_p]
     library.ClonePixelIterator.restype = ctypes.c_void_p
@@ -823,9 +841,12 @@ try:
     # library.PixelSetLastIteratorRow
     # library.PixelSyncIterator
 
-    #
-    # Pixel Wand Methods
-    # http://www.imagemagick.org/api/pixel-wand.php
+    ############################################################################
+    #                                                                          #
+    # Pixel Wand Methods                                                       #
+    # http://www.imagemagick.org/api/pixel-wand.php                            #
+    #                                                                          #
+    ############################################################################
     # library.ClearPixelWand
     # library.ClonePixelWand
     # library.ClonePixelWands
@@ -906,8 +927,12 @@ try:
     # library.PixelSetYellow
     # library.PixelSetYellowQuantum
 
-    # Image Vector Drawing
-    # http://www.imagemagick.org/api/drawing-wand.php
+    ############################################################################
+    #                                                                          #
+    # Image Vector Drawing                                                     #
+    # http://www.imagemagick.org/api/drawing-wand.php                          #
+    #                                                                          #
+    ############################################################################
     library.ClearDrawingWand.argtypes = [ctypes.c_void_p]
     library.CloneDrawingWand.argtypes = [ctypes.c_void_p]
     library.CloneDrawingWand.restype = ctypes.c_void_p
@@ -980,9 +1005,9 @@ try:
     library.DrawGetFont.restype = c_magick_char_p
     library.DrawGetFontFamily.argtypes = [ctypes.c_void_p]
     library.DrawGetFontFamily.restype = c_magick_char_p
-    library.DrawGetFontResolution.argtypes = [ctypes.c_void_p, #wand
-                               ctypes.POINTER(ctypes.c_double), # x
-                               ctypes.POINTER(ctypes.c_double)] # y
+    library.DrawGetFontResolution.argtypes = [ctypes.c_void_p,  # wand
+                                              ctypes.c_double_p,
+                                              ctypes.c_double_p]
     library.DrawGetFontResolution.restype = ctypes.c_uint
     library.DrawGetFontSize.argtypes = [ctypes.c_void_p]
     library.DrawGetFontSize.restype = ctypes.c_double
@@ -1002,7 +1027,7 @@ try:
                                            ctypes.c_void_p]
     library.DrawGetStrokeDashArray.argtypes = [ctypes.c_void_p,
                                                ctypes.POINTER(ctypes.c_size_t)]
-    library.DrawGetStrokeDashArray.restype = ctypes.POINTER(ctypes.c_double)
+    library.DrawGetStrokeDashArray.restype = ctypes.c_double_p
     library.DrawGetStrokeDashOffset.argtypes = [ctypes.c_void_p]
     library.DrawGetStrokeDashOffset.restype = ctypes.c_double
     library.DrawGetStrokeLineCap.argtypes = [ctypes.c_void_p]
@@ -1065,22 +1090,22 @@ try:
                                                 ctypes.c_double,  # y2
                                                 ctypes.c_double,  # x
                                                 ctypes.c_double]  # y
-    library.DrawPathCurveToQuadraticBezierAbsolute.argtypes = [ctypes.c_void_p,  # wand
-                                                               ctypes.c_double,  # x1
-                                                               ctypes.c_double,  # y1
-                                                               ctypes.c_double,  # x
-                                                               ctypes.c_double]  # y
-    library.DrawPathCurveToQuadraticBezierRelative.argtypes = [ctypes.c_void_p,  # wand
-                                                               ctypes.c_double,  # x1
-                                                               ctypes.c_double,  # y1
-                                                               ctypes.c_double,  # x
-                                                               ctypes.c_double]  # y
-    library.DrawPathCurveToQuadraticBezierSmoothAbsolute.argtypes = [ctypes.c_void_p,  # wand
-                                                                     ctypes.c_double,  # x
-                                                                     ctypes.c_double]  # y
-    library.DrawPathCurveToQuadraticBezierSmoothRelative.argtypes = [ctypes.c_void_p,  # wand
-                                                                     ctypes.c_double,  # x
-                                                                     ctypes.c_double]  # y
+    library.DrawPathCurveToQuadraticBezierAbsolute.argtypes = [ctypes.c_void_p,
+                                                               ctypes.c_double,
+                                                               ctypes.c_double,
+                                                               ctypes.c_double,
+                                                               ctypes.c_double]
+    library.DrawPathCurveToQuadraticBezierRelative.argtypes = [ctypes.c_void_p,
+                                                               ctypes.c_double,
+                                                               ctypes.c_double,
+                                                               ctypes.c_double,
+                                                               ctypes.c_double]
+    library.DrawPathCurveToQuadraticBezierSmoothAbsolute.argtypes = [
+        ctypes.c_void_p, ctypes.c_double, ctypes.c_double
+    ]
+    library.DrawPathCurveToQuadraticBezierSmoothRelative.argtypes = [
+        ctypes.c_void_p, ctypes.c_double, ctypes.c_double
+    ]
     library.DrawPathCurveToSmoothAbsolute.argtypes = [ctypes.c_void_p,  # wand
                                                       ctypes.c_double,  # x2
                                                       ctypes.c_double,  # y2
@@ -1207,25 +1232,25 @@ try:
     library.DrawSetOpacity.argtypes = [ctypes.c_void_p, ctypes.c_double]
     library.DrawSetGravity.argtypes = [ctypes.c_void_p,
                                        ctypes.c_int]
-    library.DrawSetStrokeAntialias.argtypes = [ctypes.c_void_p,  # wand
-                                               ctypes.c_int]  # stroke_antialias
+    library.DrawSetStrokeAntialias.argtypes = [ctypes.c_void_p,
+                                               ctypes.c_int]
     library.DrawSetStrokeColor.argtypes = [ctypes.c_void_p,
                                            ctypes.c_void_p]
-    library.DrawSetStrokeDashArray.argtypes = [ctypes.c_void_p,  # wand
-                                               ctypes.c_size_t,  # number_elements
-                                               ctypes.POINTER(ctypes.c_double)]
-    library.DrawSetStrokeDashOffset.argtypes = [ctypes.c_void_p,  # wand
-                                                ctypes.c_double]  # dash_offset
-    library.DrawSetStrokeLineCap.argtypes = [ctypes.c_void_p,  # wand
-                                             ctypes.c_int]  # linecap
-    library.DrawSetStrokeLineJoin.argtypes = [ctypes.c_void_p,  # wand
-                                              ctypes.c_int]  # linejoin
-    library.DrawSetStrokeMiterLimit.argtypes = [ctypes.c_void_p,  # wand
-                                                ctypes.c_size_t]  # miterlimit
-    library.DrawSetStrokeOpacity.argtypes = [ctypes.c_void_p,  # wand
-                                             ctypes.c_double]  # stroke_opacity
-    library.DrawSetStrokePatternURL.argtypes = [ctypes.c_void_p,  # wand
-                                                ctypes.c_char_p]  # fill_url
+    library.DrawSetStrokeDashArray.argtypes = [ctypes.c_void_p,
+                                               ctypes.c_size_t,
+                                               ctypes.c_double_p]
+    library.DrawSetStrokeDashOffset.argtypes = [ctypes.c_void_p,
+                                                ctypes.c_double]
+    library.DrawSetStrokeLineCap.argtypes = [ctypes.c_void_p,
+                                             ctypes.c_int]
+    library.DrawSetStrokeLineJoin.argtypes = [ctypes.c_void_p,
+                                              ctypes.c_int]
+    library.DrawSetStrokeMiterLimit.argtypes = [ctypes.c_void_p,
+                                                ctypes.c_size_t]
+    library.DrawSetStrokeOpacity.argtypes = [ctypes.c_void_p,
+                                             ctypes.c_double]
+    library.DrawSetStrokePatternURL.argtypes = [ctypes.c_void_p,
+                                                ctypes.c_char_p]
     library.DrawSetStrokePatternURL.restype = ctypes.c_uint
     library.DrawSetStrokeWidth.argtypes = [ctypes.c_void_p,
                                            ctypes.c_double]
@@ -1277,11 +1302,40 @@ try:
     library.PushDrawingWand.argtypes = [ctypes.c_void_p]
     library.PushDrawingWand.restype = ctypes.c_uint
 
+    ############################################################################
+    #                                                                          #
+    # Command-line Interface                                                   #
+    # http://www.imagemagick.org/api/mogrify.php                               #
+    #                                                                          #
+    ############################################################################
+
+    ############################################################################
+    #                                                                          #
+    # Wand View Methods                                                        #
+    # http://www.imagemagick.org/api/wand-view.php                             #
+    #                                                                          #
+    ############################################################################
+
+    ############################################################################
+    #                                                                          #
+    # Deprecated Methods                                                       #
+    # http://www.imagemagick.org/api/magick-deprecate.php                      #
+    #                                                                          #
+    ############################################################################
+    # Empty
+
+    ############################################################################
+    #                                                                          #
+    # Error and Warning Codes                                                  #
+    # http://www.imagemagick.org/script/exception.php                          #
+    #                                                                          #
+    ############################################################################
+    # Empty. See ``wand.exceptions.DOMAIN_MAP`` for implementation.
+
 except AttributeError:
     raise ImportError('MagickWand shared library not found or incompatible\n'
                       'Original exception was raised in:\n' +
                       traceback.format_exc())
-
 
 
 #: (:class:`ctypes.CDLL`) The C standard library.

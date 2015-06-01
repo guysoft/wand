@@ -15,8 +15,8 @@ import platform
 import sys
 import traceback
 
-__all__ = ('MagickPixelPacket', 'PointInfo', 'AffineMatrix', 'c_magick_char_p',
-           'library', 'libc', 'libmagick', 'load_library')
+__all__ = ('MagickPixelPacket', 'PixelInfo', 'PointInfo', 'AffineMatrix',
+           'c_magick_char_p', 'library', 'libc', 'libmagick', 'load_library')
 
 
 class c_magick_char_p(ctypes.c_char_p):
@@ -86,7 +86,7 @@ def load_library():
 
     """
     tried_paths = []
-    versions = ('', '-Q16', '-Q8', '-6.Q16')
+    versions = ('', '-Q16', '-Q8', '-6.Q16', '-7.Q16')
     options = ('', 'HDRI')
     combinations = itertools.product(versions, options)
     for suffix in (version + option for version, option in combinations):
@@ -133,6 +133,22 @@ class MagickPixelPacket(ctypes.Structure):
                 ('green', ctypes.c_double),
                 ('blue', ctypes.c_double),
                 ('opacity', ctypes.c_double),
+                ('index', ctypes.c_double)]
+
+
+class PixelInfo(ctypes.Structure):
+
+    _fields_ = [('storage_class', ctypes.c_int),
+                ('colorspace', ctypes.c_int),
+                ('alpha_trait', ctypes.c_int),
+                ('fuzz', ctypes.c_double),
+                ('depth', ctypes.c_size_t),
+                ('count', ctypes.c_size_t),
+                ('red', ctypes.c_double),
+                ('green', ctypes.c_double),
+                ('blue', ctypes.c_double),
+                ('black', ctypes.c_double),
+                ('alpha', ctypes.c_double),
                 ('index', ctypes.c_double)]
 
 
@@ -311,10 +327,20 @@ try:
     library.MagickGetGravity.argtypes = [ctypes.c_void_p]
     library.MagickGetGravity.restype = ctypes.c_int
     # library.MagickGetHomeURL
-    # library.MagickGetImageArtifact
-    # library.MagickGetImageArtifacts
-    # library.MagickGetImageProfile
-    # library.MagickGetImageProfiles
+    library.MagickGetImageArtifact.argtypes = [ctypes.c_void_p,
+                                               ctypes.c_char_p]
+    library.MagickGetImageArtifact.restype = c_magick_char_p
+    library.MagickGetImageArtifacts.argtypes = [ctypes.c_void_p,
+                                                 ctypes.c_char_p,
+                                                 ctypes.POINTER(ctypes.c_size_t)]
+    library.MagickGetImageArtifacts.restype = ctypes.POINTER(c_magick_char_p)
+    library.MagickGetImageProfile.argtypes = [ctypes.c_void_p,
+                                              ctypes.c_char_p]
+    library.MagickGetImageProfile.restype = c_magick_char_p
+    library.MagickGetImageProfiles.argtypes = [ctypes.c_void_p,
+                                               ctypes.c_char_p,
+                                               ctypes.POINTER(ctypes.c_size_t)]
+    library.MagickGetImageProfiles.restype = ctypes.POINTER(c_magick_char_p)
     library.MagickGetImageProperty.argtypes = [ctypes.c_void_p,
                                                ctypes.c_char_p]
     library.MagickGetImageProperty.restype = c_magick_char_p
@@ -369,8 +395,13 @@ try:
     library.MagickSetGravity.argtypes = [ctypes.c_void_p,
                                          ctypes.c_int]
     library.MagickSetGravity.restype = ctypes.c_int
-    # library.MagickSetImageArtifact
-    # library.MagickSetImageProfile
+    library.MagickSetImageArtifact.argtypes = [ctypes.c_void_p,
+                                               ctypes.c_char_p,
+                                               ctypes.c_char_p]
+    library.MagickSetImageProfile.argtypes = [ctypes.c_void_p,
+                                              ctypes.c_char_p,
+                                              ctypes.c_void_p,
+                                              ctypes.c_size_t]
     library.MagickSetImageProperty.argtypes = [ctypes.c_void_p,
                                                ctypes.c_char_p,
                                                ctypes.c_char_p]
@@ -457,20 +488,26 @@ try:
     library.MagickCompositeImage.argtypes = [ctypes.c_void_p, ctypes.c_void_p,
                                              ctypes.c_int, ctypes.c_ssize_t,
                                              ctypes.c_ssize_t]
-    library.MagickCompositeImageChannel.argtypes = [
-        ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p,
-        ctypes.c_int, ctypes.c_ssize_t, ctypes.c_ssize_t
-    ]
+    try:
+        library.MagickCompositeImageChannel.argtypes = [
+            ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p,
+            ctypes.c_int, ctypes.c_ssize_t, ctypes.c_ssize_t
+        ]
+    except AttributeError:
+        library.MagickCompositeImageChannel = None
     # library.MagickCompositeLayers
     # library.MagickContrastImage
     library.MagickContrastStretchImage.argtypes = [ctypes.c_void_p,  # wand
                                                    ctypes.c_double,  # black
                                                    ctypes.c_double]  # white
 
-    library.MagickContrastStretchImageChannel.argtypes = [ctypes.c_void_p,
-                                                          ctypes.c_int,
-                                                          ctypes.c_double,
-                                                          ctypes.c_double]
+    try:
+        library.MagickContrastStretchImageChannel.argtypes = [ctypes.c_void_p,
+                                                              ctypes.c_int,
+                                                              ctypes.c_double,
+                                                              ctypes.c_double]
+    except AttributeError:
+        library.MagickContrastStretchImageChannel = None
     # library.MagickConvolveImage
     library.MagickCropImage.argtypes = [ctypes.c_void_p, ctypes.c_size_t,
                                         ctypes.c_size_t, ctypes.c_ssize_t,
@@ -502,10 +539,13 @@ try:
                                             ctypes.c_int,
                                             ctypes.c_double]
 
-    library.MagickEvaluateImageChannel.argtypes = [ctypes.c_void_p,
-                                                   ctypes.c_int,
-                                                   ctypes.c_int,
-                                                   ctypes.c_double]
+    try:
+        library.MagickEvaluateImageChannel.argtypes = [ctypes.c_void_p,
+                                                       ctypes.c_int,
+                                                       ctypes.c_int,
+                                                       ctypes.c_double]
+    except AttributeError:
+        libmagick.MagickEvaluateImageChannel = None
     # library.MagickExportImagePixels
     # library.MagickExtentImage
     library.MagickFlipImage.argtypes = [ctypes.c_void_p]
@@ -522,25 +562,34 @@ try:
                                             ctypes.c_int,
                                             ctypes.c_size_t,
                                             ctypes.c_double_p]
-    library.MagickFunctionImageChannel.argtypes = [ctypes.c_void_p,
-                                                   ctypes.c_int,
-                                                   ctypes.c_int,
-                                                   ctypes.c_size_t,
-                                                   ctypes.c_double_p]
+    try:
+        library.MagickFunctionImageChannel.argtypes = [ctypes.c_void_p,
+                                                       ctypes.c_int,
+                                                       ctypes.c_int,
+                                                       ctypes.c_size_t,
+                                                       ctypes.c_double_p]
+    except AttributeError:
+        library.MagickFunctionImageChannel = None
     library.MagickFxImage.argtypes = [ctypes.c_void_p,  # wand
                                       ctypes.c_char_p]  # expression
     library.MagickFxImage.restype = ctypes.c_void_p
 
-    library.MagickFxImageChannel.argtypes = [ctypes.c_void_p,  # wand
-                                             ctypes.c_int,     # channel
-                                             ctypes.c_char_p]  # expression
-    library.MagickFxImageChannel.restype = ctypes.c_void_p
+    try:
+        library.MagickFxImageChannel.argtypes = [ctypes.c_void_p,  # wand
+                                                 ctypes.c_int,     # channel
+                                                 ctypes.c_char_p]  # expression
+        library.MagickFxImageChannel.restype = ctypes.c_void_p
+    except AttributeError:
+        library.MagickFxImageChannel = None
     library.MagickGammaImage.argtypes = [ctypes.c_void_p,
                                          ctypes.c_double]
 
-    library.MagickGammaImageChannel.argtypes = [ctypes.c_void_p,
-                                                ctypes.c_int,
-                                                ctypes.c_double]
+    try:
+        library.MagickGammaImageChannel.argtypes = [ctypes.c_void_p,
+                                                    ctypes.c_int,
+                                                    ctypes.c_double]
+    except AttributeError:
+        library.MagickGammaImageChannel = None
 
     library.MagickGaussianBlurImage.argtypes = [ctypes.c_void_p,
                                                 ctypes.c_double,
@@ -577,9 +626,12 @@ try:
     library.MagickGetImageDelay.restype = ctypes.c_ssize_t
     library.MagickGetImageDepth.argtypes = [ctypes.c_void_p]
     library.MagickGetImageDepth.restype = ctypes.c_size_t
-    library.MagickGetImageChannelDepth.argtypes = [ctypes.c_void_p,
-                                                   ctypes.c_int]
-    library.MagickGetImageChannelDepth.restype = ctypes.c_size_t
+    try:
+        library.MagickGetImageChannelDepth.argtypes = [ctypes.c_void_p,
+                                                       ctypes.c_int]
+        library.MagickGetImageChannelDepth.restype = ctypes.c_size_t
+    except AttributeError:
+        library.MagickGetImageChannelDepth = None
     # library.MagickGetImageDispose
     # library.MagickGetImageDistortion
     # library.MagickGetImageDistortions
@@ -657,15 +709,22 @@ try:
     # library.MagickMorphologyImage
     # library.MagickMotionBlurImage
     library.MagickNegateImage.argtypes = [ctypes.c_void_p, ctypes.c_int]
-    library.MagickNegateImageChannel.argtypes = [ctypes.c_void_p,
-                                                 ctypes.c_int,
-                                                 ctypes.c_int]
+    try:
+        library.MagickNegateImageChannel.argtypes = [ctypes.c_void_p,
+                                                     ctypes.c_int,
+                                                     ctypes.c_int]
+    except AttributeError:
+        library.MagickNegateImageChannel = None
+
     library.MagickNewImage.argtypes = [ctypes.c_void_p, ctypes.c_int,
                                        ctypes.c_int, ctypes.c_void_p]
     # library.MagickNextImage
     library.MagickNormalizeImage.argtypes = [ctypes.c_void_p]
-    library.MagickNormalizeImageChannel.argtypes = [ctypes.c_void_p,
-                                                    ctypes.c_int]
+    try:
+        library.MagickNormalizeImageChannel.argtypes = [ctypes.c_void_p,
+                                                        ctypes.c_int]
+    except AttributeError:
+        library.MagickNormalizeImageChannel = None
     # library.MagickOilPaintImage
     # library.MagickOpaquePaintImage
     # library.MagickOptimizeImageLayers
@@ -702,8 +761,11 @@ try:
     # library.MagickScaleImage
     # library.MagickSegmentImage
     # library.MagickSelectiveBlurImage
-    library.MagickSeparateImageChannel.argtypes = [ctypes.c_void_p,
-                                                   ctypes.c_int]
+    try:
+        library.MagickSeparateImageChannel.argtypes = [ctypes.c_void_p,
+                                                       ctypes.c_int]
+    except AttributeError:
+        library.MagickSeparateImageChannel = None
     # library.MagickSepiaToneImage
     # library.MagickSetImage
     # library.MagickSetImageAlphaChannel
@@ -922,8 +984,16 @@ try:
     library.PixelGetMagenta.restype = ctypes.c_double
     library.PixelGetMagentaQuantum.argtypes = [ctypes.c_void_p]
     library.PixelGetMagentaQuantum.restype = ctypes.c_size_t
-    # library.PixelGetMagickColor.argtypes
-    # library.PixelGetPixel
+    try:
+        library.PixelGetMagickColor.argtypes = [ctypes.c_void_p,
+                                                ctypes.c_void_p]
+    except AttributeError:
+        library.PixelGetMagickColor = None
+    try:
+        library.PixelGetPixel.argtypes = [ctypes.c_void_p]
+        library.PixelGetPixel.restype = ctypes.c_void_p
+    except AttributeError:
+        library.PixelGetPixel = None
     # library.PixelGetQuantumPacket
     # library.PixelGetQuantumPixel
     library.PixelGetRed.argtypes = [ctypes.c_void_p]
@@ -953,8 +1023,14 @@ try:
     library.PixelSetIndex.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
     library.PixelSetMagenta.argtypes = [ctypes.c_void_p, ctypes.c_double]
     library.PixelSetMagentaQuantum.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
-    library.PixelSetMagickColor.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
-    # library.PixelSetPixelColor
+    try:
+        library.PixelSetMagickColor.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+    except AttributeError:
+        library.PixelSetMagickColor = None
+    try:
+        library.PixelSetPixelColor.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+    except AttributeError:
+        library.PixelSetPixelColor = None
     # library.PixelSetQuantumPixel
     library.PixelSetRed.argtypes = [ctypes.c_void_p, ctypes.c_double]
     library.PixelSetRedQuantum.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
@@ -1105,10 +1181,14 @@ try:
                                  ctypes.c_double,
                                  ctypes.c_double,
                                  ctypes.c_double]
-    library.DrawMatte.argtypes = [ctypes.c_void_p,  # wand
-                                  ctypes.c_double,  # x
-                                  ctypes.c_double,  # y
-                                  ctypes.c_uint]  # PaintMethod
+
+    try:
+        library.DrawMatte.argtypes = [ctypes.c_void_p,
+                                      ctypes.c_double,
+                                      ctypes.c_double,
+                                      ctypes.c_uint]
+    except AttributeError:
+        library.DrawMatte = None
     library.DrawPathClose.argtypes = [ctypes.c_void_p]
     library.DrawPathCurveToAbsolute.argtypes = [ctypes.c_void_p,  # wand
                                                 ctypes.c_double,  # x1
